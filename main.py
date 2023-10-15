@@ -1,8 +1,8 @@
 
 num_Processes = 7
-time_in = [0,2,3,4,7,8,10]
-time_duration = [3,2,7,4,3,5,3]
-quantum = 2
+time_in = [0,0,12,27,7,54,12]
+time_duration = [3,10,7,21,3,5,13]
+
 
 
 
@@ -12,33 +12,19 @@ def create_dic(process , enter , duration):
     
     dic_processes = {}
     for i in range(process):
-        dic_processes[i+1] = [enter[i] , duration[i]]
+        dic_processes[f'P{i+1}'] = [enter[i] , duration[i]]
     return dic_processes
-
-
-
-#to create the dictionary of processes for RR
-def create_dic_RR(process , enter , duration):
-    
-    dic_processes = {}
-    for i in range(process):
-        completion_time = 0
-        remaining_duration = duration
-        dic_processes[f'p{i+1}'] = [enter[i] , duration[i] , completion_time , 0 , remaining_duration[i]]
-    return dic_processes
-
-
 
 
 
 #input to functions
 process_info = create_dic(num_Processes , time_in , time_duration)
-process_info_RR = create_dic_RR(num_Processes , time_in , time_duration)
 
 
 #FCFS
 def FCFS(processes):
     
+    waiting_flag = 0
     average_waiting = 0 
     average_turn_around = 0
     
@@ -53,18 +39,21 @@ def FCFS(processes):
         
         turn_around_time = v[1]
         if k != 1: 
-            waiting_time += (sorted_by_time_in[k-1][0] + sorted_by_time_in[k-1][1]) - v[0]
+            waiting_time += (waiting_flag) - v[0]
             
             if waiting_time < 0 :
                 waiting_time = 0
             
-            print("P" + str(k) + "\t\t" + str(v[0]) + "\t\t" + str(v[1]) + "\t\t" + str(waiting_time) + "\t\t" + str(turn_around_time + waiting_time))
+            print(str(k) + "\t\t" + str(v[0]) + "\t\t" + str(v[1]) + "\t\t" + str(waiting_time) + "\t\t" + str(turn_around_time + waiting_time))
             average_waiting += waiting_time
             average_turn_around += turn_around_time + waiting_time
+            waiting_flag = v[0] + v[1]
         else :
-            print("P" + str(k) + "\t\t" + str(v[0]) + "\t\t" + str(v[1]) + "\t\t" + str(waiting_time) + "\t\t" + str(turn_around_time + waiting_time))
+            waiting_flag += v[1]
+            print(str(k) + "\t\t" + str(v[0]) + "\t\t" + str(v[1]) + "\t\t" + str(waiting_time) + "\t\t" + str(turn_around_time + waiting_time))
             average_waiting += waiting_time
             average_turn_around += turn_around_time + waiting_time
+            
     print(f"\n\nThe average waiting time is {average_waiting/num_Processes} and the average turn around time is {average_turn_around/num_Processes}")    
         
 
@@ -72,8 +61,10 @@ def FCFS(processes):
 #SJF
 def SJF(processes):
     
+    waiting_flag = 0
     average_waiting = 0 
     average_turn_around = 0
+    
     
     #for sorting 
     print("Process\t\tenter\t\tburst time\twaiting time\tturn around time")
@@ -92,8 +83,8 @@ def SJF(processes):
     
     
     while len(processes_copy) > 0 or len(temp) >0 :
+        
         constant_SJF = 0
-    
         min_burst_time = min(temp.values() , key = lambda z : z[1] , default=0)
         temp_copy = temp.copy()
         
@@ -129,72 +120,23 @@ def SJF(processes):
         
         turn_around_time = value3[1] 
         if key3 != 1: 
-            waiting_time += (sorted_by_SJF[key3-1][0] + sorted_by_SJF[key3-1][1]) - value3[0]
+            waiting_time += waiting_flag - value3[0]
         
             if waiting_time < 0 :
                 waiting_time = 0
             
-            print("P" + str(key3) + "\t\t" + str(value3[0]) + "\t\t" + str(value3[1]) + "\t\t" + str(waiting_time) + "\t\t" + str(turn_around_time + waiting_time))
+            print(str(key3) + "\t\t" + str(value3[0]) + "\t\t" + str(value3[1]) + "\t\t" + str(waiting_time) + "\t\t" + str(turn_around_time + waiting_time))
             average_waiting += waiting_time
             average_turn_around += turn_around_time + waiting_time
+            waiting_flag = value3[0] + value3[1]
         else :
-            print("P" + str(key3) + "\t\t" + str(value3[0]) + "\t\t" + str(value3[1]) + "\t\t" + str(waiting_time) + "\t\t" + str(turn_around_time + waiting_time))
+            waiting_flag = value3[1]
+            print(str(key3) + "\t\t" + str(value3[0]) + "\t\t" + str(value3[1]) + "\t\t" + str(waiting_time) + "\t\t" + str(turn_around_time + waiting_time))
             average_waiting += waiting_time
             average_turn_around += turn_around_time + waiting_time
 
     print(f"\n\nThe average waiting time is {average_waiting/num_Processes} and the average turn around time is {average_turn_around/num_Processes}")    
-
-
-
-#RR
-def round_robin(processes , quantum):
-    
-    average_waiting = 0 
-    average_turn_around = 0
-    
-    print("Process\t\tenter\t\tburst time\twaiting time\tturn around time")
-    clock = 0
-    sorted_by_time_in = {key:value for key , value in sorted(processes.items() , key = lambda v : v[1][0])}
-    
-    
-    #if u want to see the starting step
-    """
-    for k ,v in sorted_by_time_in.items():
-        print(str(k) + "\t\t" + str(v[0]) + "\t\t" + str(v[1]) + "\t\t" + "not yet" + "\t\t" + "not yet")
-    """
-      
-      
-    #for quantum reduction and calculating waiting time and turn around    
-    while any(value[1] > 0 for value in sorted_by_time_in.values()):
-        
-        for k,v in sorted_by_time_in.items() : 
-               
-            if sorted_by_time_in[k][1] > 0 :
-                sorted_by_time_in[k][1] = sorted_by_time_in[k][1] - quantum
-                clock += quantum
-                
-         
-            if sorted_by_time_in[k][1] <= 0 :
-                clock += sorted_by_time_in[k][1]
-                sorted_by_time_in[k][1] = 0
-                sorted_by_time_in[k][2] = sorted_by_time_in[k][2] + clock
-            
-                
-            if sorted_by_time_in[k][1] != 0 :
-                print(str(k) + "\t\t" + str(v[0]) + "\t\t" + str(v[1]) + "\t\t" + "not yet" + "\t\t" + "not yet")
-            
-             
-            else :
-                if sorted_by_time_in[k][3] == 0 :
-                    
-                    print(str(k) + "\t\t" + str(v[0]) + "\t\t" + str(v[1]) + "\t\t" + str(v[2] - v[0] - v[4]) + "\t\t" + str(v[2] - v[0]))
-                    sorted_by_time_in[k][3] = 1
-                    average_turn_around += v[2] - v[0]
-                    average_waiting += v[2] - v[0] - v[4]
-    
-    print(f"\n\nThe average waiting time is {average_waiting/num_Processes} and the average turn around time is {average_turn_around/num_Processes}")    
-
-            
+     
             
                 
         
@@ -206,4 +148,4 @@ FCFS(process_info)
 print("\n\n******************************************************************\n\n")
 SJF(process_info)
 print("\n\n******************************************************************\n\n")
-round_robin(process_info_RR , quantum)
+
